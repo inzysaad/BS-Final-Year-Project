@@ -17,7 +17,5 @@ Default ip gateway of pc
 
 cmd command:    ipconfig
 
-
 pyconfig via terminal:
 sudo raspi-config
-

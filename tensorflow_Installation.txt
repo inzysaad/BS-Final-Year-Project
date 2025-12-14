@@ -37,7 +37,7 @@ pip install tensorflow-2.5.0-cp37-none-linux_armv7l.whl
 
 
 -------------------------------------------
-New video by Sam Westby
+Video by Sam Westby
 login error:
  C:\Users\Saad Ahmed/.ssh/known_hosts.old
 
@@ -47,7 +47,7 @@ cat /etc/os-release
 sudo apt update
 sudo apt upgrade
 
-3:34 Find your .sh script
+Find your .sh script
 python3 -V (take a note of this)
 uname -m (take a note of this)
 
@@ -69,7 +69,7 @@ If python3 -V = "3.9.*" AND uname -m = "armv7l"
 
 ----------------------------------------------------------------------
 
-5:55 Downgrading Python (OPTIONAL)
+Downgrading Python (OPTIONAL)
 (1) Run the easy installer
 curl https://pyenv.run | bash
 
@@ -108,7 +108,7 @@ pyenv local ~~Your python version~~
 
 -----------------------------------------------------------------------------
 
- 9:30 Install TensorFlow
+Install TensorFlow
 
 mkdir project
 cd project
@@ -170,8 +170,6 @@ cv2._version_
 tf._version_
 
 ---------------------------------
-
-new video
 opencv
 -------------------------------
 sudo nano /etc/dphys-swapfile 
@@ -196,19 +194,18 @@ installing open cv
 -------------------------------------------
 
 
-0:13 Access the terminal of your Pi
-
-0:34 Check if you're using all of your system memory with:
+Access the terminal of your Pi
+Check if you're using all of your system memory with:
  df h
 If you're not using most of it, run
  sudo raspi-config
  advanced - expand filesystem
  reboot your pi
 
-1:19  Update and upgrade
+Update and upgrade
 sudo apt-get update && sudo apt-get upgrade
 
-1:35 Check your python version
+Check your python version
 python3 V
 
 sudo apt-get install python3-pip python3-virtualenv
@@ -218,7 +215,7 @@ python3 -m pip install virtualenv
 python3 -m virtualenv env
 source env/bin/activate
 
-3:03 We need a bunch of system packages (credit to https://singleboardbytes.com/647/inst...)
+We need a bunch of system packages (credit to https://singleboardbytes.com/647/inst...)
 
 sudo apt install -y build-essential cmake pkg-config libjpeg-dev libtiff5-dev libpng-dev libavcodec-dev libavformat-dev libswscale-dev libv4l-dev libxvidcore-dev libx264-dev libfontconfig1-dev libcairo2-dev libgdk-pixbuf2.0-dev libpango1.0-dev libgtk2.0-dev libgtk-3-dev libatlas-base-dev gfortran libhdf5-dev libhdf5-serial-dev libhdf5-103 libqt5gui5 libqt5webkit5 libqt5test5 python3-pyqt5 python3-dev
 
@@ -230,11 +227,11 @@ Users of PiCamera may also have to enable Camera Support:
  Legacy Camera Support - Enable
 
 
-4:15 Install OpenCV
+Install OpenCV
 pip install opencv-contrib-python
 --Takes a long time
 
-5:25 Testing
+Testing
 python
 import cv2
 cv2._version_
