@@ -1,0 +1,139 @@
+import sys
+import time
+import RPi.GPIO as GPIO
+
+
+lfmf=15#10                      #--: Left front motor forward
+lfmr=14#8                       #--: Left front motor reverse
+rfmf=17#11                      #--: Right front motor forward
+rfmr=27#13                      #--: Right front motor reverse
+
+#lbmf=15#10                      #--: Left back motor forward
+#lbmr=14#8                       #--: Left back motor reverse
+#rbmf=17#11                      #--: Right back motor forward
+#rbmr=27#13                      #--: Right back motor reverse
+
+leftsensor=22#15
+rightsensor=23#16
+
+frontlights=
+backlights=
+leftindicator=
+rightindicator=
+
+#lidar_sensor=
+leftpwm=24#18;
+rightpwm=10#19;
+
+#Global Variables
+sleeptime=1
+pwmvalue=60
+pwmturnvalue=20
+
+#Initializing GPIO_PINS
+GPIO.setwarnings(False)
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(lfmf, GPIO.OUT, initial=GPIO.LOW)
+GPIO.setup(rfmf, GPIO.OUT, initial=GPIO.LOW)
+GPIO.setup(lfmr, GPIO.OUT, initial=GPIO.LOW)
+GPIO.setup(rfmr, GPIO.OUT, initial=GPIO.LOW)
+GPIO.setup(lbmf, GPIO.OUT, initial=GPIO.LOW)
+GPIO.setup(rbmf, GPIO.OUT, initial=GPIO.LOW)
+GPIO.setup(lbmr, GPIO.OUT, initial=GPIO.LOW)
+GPIO.setup(rbmr, GPIO.OUT, initial=GPIO.LOW)
+
+GPIO.setup(leftsensor, GPIO.IN)
+GPIO.setup(rightsensor, GPIO.IN)
+GPIO.setup(lidar_sensor, GPIO.IN)
+GPIO.setup(leftpwm, GPIO.OUT)
+GPIO.setup(rightpwm, GPIO.OUT)
+
+
+def left(x):                         
+    print ("LEFT")
+    GPIO.output(lfmf, GPIO.LOW)                   #-----> turning left 
+    GPIO.output(lfmr, GPIO.HIGH) 
+    GPIO.output(rfmf, GPIO.HIGH) 
+    GPIO.output(rfmr, GPIO.LOW)
+    
+    GPIO.output(lbmf, GPIO.LOW)
+    GPIO.output(lbmr, GPIO.HIGH) 
+    GPIO.output(rbmf, GPIO.HIGH) 
+    GPIO.output(rbmr, GPIO.LOW)
+    time.sleep(x)
+
+def right(x): 
+    print ("RIGHT")
+    GPIO.output(lfmf, GPIO.HIGH)  
+    GPIO.output(lfmr, GPIO.LOW)                  #-----> turning right   
+    GPIO.output(rfmf, GPIO.LOW) 
+    GPIO.output(rfmr, GPIO.HIGH)
+
+    GPIO.output(lbmf, GPIO.LOW)
+    GPIO.output(lbmr, GPIO.HIGH) 
+    GPIO.output(rbmf, GPIO.HIGH) 
+    GPIO.output(rbmr, GPIO.LOW)
+    time.sleep(x)
+
+def forward(x): 
+    print ("FORWARD")
+    GPIO.output(lfmf, GPIO.HIGH) 
+    GPIO.output(lfmr, GPIO.LOW)                   #-----> move forward 
+    GPIO.output(rfmf, GPIO.HIGH) 
+    GPIO.output(rfmr, GPIO.LOW)
+
+    GPIO.output(lbmf, GPIO.LOW)
+    GPIO.output(lbmr, GPIO.HIGH) 
+    GPIO.output(rbmf, GPIO.HIGH) 
+    GPIO.output(rbmr, GPIO.LOW)
+    time.sleep(x)
+
+def reverse(x): 
+    print ("BACKWARDS")
+    GPIO.output(lfmf, GPIO.LOW) 
+    GPIO.output(lfmr, GPIO.HIGH) 
+    GPIO.output(rfmf, GPIO.LOW)                   #-----> move backwards 
+    GPIO.output(rfmr, GPIO.HIGH)
+
+    GPIO.output(lbmf, GPIO.LOW)
+    GPIO.output(lbmr, GPIO.HIGH) 
+    GPIO.output(rbmf, GPIO.HIGH) 
+    GPIO.output(rbmr, GPIO.LOW)
+    time.sleep(x)
+
+def stop(): 
+    print ("STOP")
+    GPIO.output(lfmf, GPIO.LOW) 
+    GPIO.output(lfmr, GPIO.LOW)                   #-----> stop 
+    GPIO.output(rfmf, GPIO.LOW) 
+    GPIO.output(rfmr, GPIO.LOW)
+
+    GPIO.output(lbmf, GPIO.LOW)
+    GPIO.output(lbmr, GPIO.LOW) 
+    GPIO.output(rbmf, GPIO.LOW) 
+    GPIO.output(rbmr, GPIO.LOW)
+    
+#-----> Controlling Speed of Motors
+s1=GPIO.PWM(leftpwm, 100)
+s2=GPIO.PWM(rightpwm, 100)
+s1.start(1)
+s2.start(1)
+s1.ChangeDutyCycle(pwmvalue)
+time.sleep(0.2)
+s2.ChangeDutyCycle(pwmvalue)
+time.sleep(0.2)
+
+while(1):
+    if(GPIO.input(leftsensor)==0 or GPIO.input(rightsensor)==0):
+        stop()
+    else:
+        forward(0.2)
+        
+        
+forward(2)
+left(2)
+right(2)
+reverse(2)
+
+print ("Initiating cleanup protocol...")
+GPIO.cleanup()

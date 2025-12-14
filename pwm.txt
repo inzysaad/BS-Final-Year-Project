@@ -1,0 +1,29 @@
+#!/usr/bin/env python2.7  
+
+import RPi.GPIO as GPIO 
+from time import sleep  
+      
+GPIO.setmode(GPIO.BCM)  
+      
+GPIO.setup(25, GPIO.OUT)
+
+fan = GPIO.PWM(25, 100)  
+print "start"  
+fan.start(0) 
+             
+sleep (5)  
+print "Run 100%"   
+fan.ChangeDutyCycle(100)
+
+sleep (5)
+print "Run 50%" 
+fan.ChangeDutyCycle(50)
+
+sleep (5)
+print "Run 25%" 
+fan.ChangeDutyCycle(25)
+
+sleep(5)
+print "Stop"
+fan.stop()     
+GPIO.cleanup()

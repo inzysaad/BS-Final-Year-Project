@@ -1,0 +1,1123 @@
+import RPi.GPIO as GPIO
+import time
+import sys
+sys.path.append('../')
+import smtplib
+from num2words import num2words
+from subprocess import call
+from mfrc522 import SimpleMFRC522
+from DFRobot_ADS1115 import ADS1115
+
+SMTP_SERVER = 'smtp.gmail.com' #Email Server (don't change!)
+SMTP_PORT = 587 #Server Port (don't change!)
+GMAIL_USERNAME = 'sardarabubakar87@gmail.com' #change this to match your gmail account
+GMAIL_PASSWORD = 'Sardar999'  #change this to match your gmail password
+
+ADS1115_REG_CONFIG_PGA_6_144V        = 0x00 # 6.144V range = Gain 2/3
+ADS1115_REG_CONFIG_PGA_4_096V        = 0x02 # 4.096V range = Gain 1
+ADS1115_REG_CONFIG_PGA_2_048V        = 0x04 # 2.048V range = Gain 2 (default)
+ADS1115_REG_CONFIG_PGA_1_024V        = 0x06 # 1.024V range = Gain 4
+ADS1115_REG_CONFIG_PGA_0_512V        = 0x08 # 0.512V range = Gain 8
+ADS1115_REG_CONFIG_PGA_0_256V        = 0x0A # 0.256V range = Gain 16
+ads1115 = ADS1115()
+
+GPIO.setmode(GPIO.BCM)
+
+logic=1
+
+ir_sensor=0
+
+LM1in1=26#37
+LM1in2=19#35
+LM2in1=21#40
+LM2in2=20#38
+En1=18#12
+En2=16#36
+RM1in1=5#29
+RM1in2=6#31
+RM2in1=24#18
+RM2in2=23#16
+En3=12#32
+En4=13#33
+
+row1        = 4
+row2        = 27
+row3        = 22
+#row4        = 0
+col1        = 14
+col2        = 15
+col3        = 7
+
+servoPIN = 17#11
+
+GPIO.setwarnings(False)
+
+GPIO.setup(logic, GPIO.OUT)
+
+GPIO.setup(col1, GPIO.OUT)
+GPIO.setup(col2, GPIO.OUT)
+GPIO.setup(col3, GPIO.OUT)
+
+GPIO.setup(row1, GPIO.IN)
+GPIO.setup(row2, GPIO.IN)
+GPIO.setup(row3, GPIO.IN)
+#GPIO.setup(row4, GPIO.IN)
+
+GPIO.setup(servoPIN, GPIO.OUT)
+
+GPIO.setup(LM1in1, GPIO.OUT)
+GPIO.setup(LM1in2, GPIO.OUT)
+GPIO.setup(LM2in1, GPIO.OUT)
+GPIO.setup(LM2in2, GPIO.OUT)
+GPIO.setup(RM1in1, GPIO.OUT)
+GPIO.setup(RM1in2, GPIO.OUT)
+GPIO.setup(RM2in1, GPIO.OUT)
+GPIO.setup(RM2in2, GPIO.OUT)
+GPIO.setup(En1, GPIO.OUT)
+GPIO.setup(En2, GPIO.OUT)
+GPIO.setup(En3, GPIO.OUT)
+GPIO.setup(En4, GPIO.OUT)
+
+GPIO.setup(ir_sensor, GPIO.IN)
+
+reader = SimpleMFRC522()
+
+class Emailer:
+    def sendmail(self, recipient, subject, content):
+        #Create Headers
+        headers = ["From: " + GMAIL_USERNAME, "Subject: " + subject, "To: " + recipient,
+                   "MIME-Version: 1.0", "Content-Type: text/html"]
+        headers = "\r\n".join(headers)
+
+        #Connect to Gmail Server
+        session = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+        session.ehlo()
+        session.starttls()
+        session.ehlo()
+
+        #Login to Gmail
+        session.login(GMAIL_USERNAME, GMAIL_PASSWORD)
+
+        #Send Email & Exit
+        session.sendmail(GMAIL_USERNAME, recipient, headers + "\r\n\r\n" + content)
+        session.quit
+
+def rotate90():
+    p.ChangeDutyCycle(2.5)
+    time.sleep(0.5)
+    p.ChangeDutyCycle(5)
+    time.sleep(0.5)
+    p.ChangeDutyCycle(7.5)
+    time.sleep(0.5)
+    p.ChangeDutyCycle(0)
+
+def rotate90again():
+    p.ChangeDutyCycle(7.5)
+    time.sleep(0.5)
+    p.ChangeDutyCycle(5)
+    time.sleep(0.5)
+    p.ChangeDutyCycle(2.5)
+    time.sleep(0.5)
+    p.ChangeDutyCycle(0)
+
+def rotate180():
+    p.ChangeDutyCycle(5)
+    time.sleep(0.5)
+    p.ChangeDutyCycle(7.5)
+    time.sleep(0.5)
+#     p.ChangeDutyCycle(2.5)
+#     time.sleep(5)
+    p.ChangeDutyCycle(10)
+    time.sleep(0.5)
+    p.ChangeDutyCycle(12.5)
+    time.sleep(0.5)
+    p.ChangeDutyCycle(0)
+
+def rotateagain():
+    p.ChangeDutyCycle(10)
+    time.sleep(0.5)
+    p.ChangeDutyCycle(7.5)
+    time.sleep(0.5)
+    p.ChangeDutyCycle(5)
+    time.sleep(0.5)
+    p.ChangeDutyCycle(2.5)
+    time.sleep(0.09)
+    p.ChangeDutyCycle(0)
+
+def keypad_scan(col_value):
+    cmd_end1= ' | aplay /home/pi/Desktop/Text1.wav  2>/dev/null' # To play back the stored .wav file and to dump the std errors to /dev/null
+    cmd_out1= '--stdout > /home/pi/Desktop/Text1.wav ' # To store the voice file
+
+    cmd_end2= ' | aplay /home/pi/Desktop/Text2.wav  2>/dev/null' # To play back the stored .wav file and to dump the std errors to /dev/null
+    cmd_out2= '--stdout > /home/pi/Desktop/Text2.wav ' # To store the voice file
+
+    cmd_end3= ' | aplay /home/pi/Desktop/Text3.wav  2>/dev/null' # To play back the stored .wav file and to dump the std errors to /dev/null
+    cmd_out3= '--stdout > /home/pi/Desktop/Text3.wav ' # To store the voice file
+
+    cmd_end4= ' | aplay /home/pi/Desktop/Text4.wav  2>/dev/null' # To play back the stored .wav file and to dump the std errors to /dev/null
+    cmd_out4= '--stdout > /home/pi/Desktop/Text4.wav ' # To store the voice file
+
+    cmd_end5= ' | aplay /home/pi/Desktop/Text5.wav  2>/dev/null' # To play back the stored .wav file and to dump the std errors to /dev/null
+    cmd_out5= '--stdout > /home/pi/Desktop/Text5.wav ' # To store the voice file
+
+    cmd_end6= ' | aplay /home/pi/Desktop/Text6.wav  2>/dev/null' # To play back the stored .wav file and to dump the std errors to /dev/null
+    cmd_out6= '--stdout > /home/pi/Desktop/Text6.wav ' # To store the voice file
+
+    cmd_end7= ' | aplay /home/pi/Desktop/Text7.wav  2>/dev/null' # To play back the stored .wav file and to dump the std errors to /dev/null
+    cmd_out7= '--stdout > /home/pi/Desktop/Text7.wav ' # To store the voice file
+
+    cmd_end8= ' | aplay /home/pi/Desktop/Text8.wav  2>/dev/null' # To play back the stored .wav file and to dump the std errors to /dev/null
+    cmd_out8= '--stdout > /home/pi/Desktop/Text8.wav ' # To store the voice file
+
+    cmd_end9= ' | aplay /home/pi/Desktop/Text9.wav  2>/dev/null' # To play back the stored .wav file and to dump the std errors to /dev/null
+    cmd_out9= '--stdout > /home/pi/Desktop/Text9.wav ' # To store the voice file
+
+    if GPIO.input(row1)==1:
+        if col_value==1:
+            text = ("Entered three")
+            text = text.replace(' ', '__')
+            call([cmd_beg+cmd_out1+text+cmd_end1], shell=True)
+            time.sleep(0.05)
+            num=1
+            return 3#1
+        elif col_value==2:
+            text = ("Entered one")
+            text = text.replace(' ', '__')
+            call([cmd_beg+cmd_out2+text+cmd_end2], shell=True)
+            time.sleep(0.05)
+            num=2
+            return 1#2
+        elif col_value==3:
+            text = ("Entered two")
+            text = text.replace(' ', '__')
+            call([cmd_beg+cmd_out3+text+cmd_end3], shell=True)
+            time.sleep(0.05)
+            num=3
+            return 2#3
+
+    elif GPIO.input(row2)==1:
+        if col_value==1:
+            text = ("Entered six")
+            text = text.replace(' ', '__')
+            call([cmd_beg+cmd_out4+text+cmd_end4], shell=True)
+            time.sleep(0.05)
+            num=4
+            return 6#4
+        elif col_value==2:
+            text = ("Entered four")
+            text = text.replace(' ', '__')
+            call([cmd_beg+cmd_out5+text+cmd_end5], shell=True)
+            time.sleep(0.05)
+            num=5
+            return 4#5
+        elif col_value==3:
+            text = ("Entered five")
+            text = text.replace(' ', '__')
+            call([cmd_beg+cmd_out6+text+cmd_end6], shell=True)
+            time.sleep(0.05)
+            num=6
+            return 5#6
+
+    elif GPIO.input(row3)==1:
+        if col_value==1:
+            text = ("Entered seven")
+            text = text.replace(' ', '__')
+            call([cmd_beg+cmd_out7+text+cmd_end7], shell=True)
+            time.sleep(0.05)
+            num=7
+            return 7
+        elif col_value==2:
+            text = ("Entered eight")
+            text = text.replace(' ', '__')
+            call([cmd_beg+cmd_out8+text+cmd_end8], shell=True)
+            time.sleep(0.05)
+            num=8
+            return 8
+        elif col_value==3:
+            text = ("Entered nine")
+            text = text.replace(' ', '__')
+            call([cmd_beg+cmd_out9+text+cmd_end9], shell=True)
+            time.sleep(0.05)
+            num=9
+            return 9
+    return -1
+
+def forwardslow():
+    GPIO.output(RM1in1, GPIO.HIGH)
+    GPIO.output(RM1in2, GPIO.LOW)
+    GPIO.output(LM1in1, GPIO.HIGH)
+    GPIO.output(LM1in2, GPIO.LOW)
+    GPIO.output(LM2in1, GPIO.HIGH)
+    GPIO.output(LM2in2, GPIO.LOW)
+    GPIO.output(RM2in2, GPIO.LOW)
+    GPIO.output(RM2in1, GPIO.HIGH)
+    p1.ChangeDutyCycle(20.5)
+    p2.ChangeDutyCycle(20.5)
+    p3.ChangeDutyCycle(23)
+    p4.ChangeDutyCycle(24)
+
+def forward():
+    GPIO.output(RM1in1, GPIO.HIGH)
+    GPIO.output(RM1in2, GPIO.LOW)
+    GPIO.output(LM1in1, GPIO.HIGH)
+    GPIO.output(LM1in2, GPIO.LOW)
+    GPIO.output(LM2in1, GPIO.HIGH)
+    GPIO.output(LM2in2, GPIO.LOW)
+    GPIO.output(RM2in2, GPIO.LOW)
+    GPIO.output(RM2in1, GPIO.HIGH)
+    p1.ChangeDutyCycle(24.5)
+    p2.ChangeDutyCycle(24.5)
+    p3.ChangeDutyCycle(27)
+    p4.ChangeDutyCycle(28)
+
+def forwardfast():
+    GPIO.output(RM1in1, GPIO.HIGH)
+    GPIO.output(RM1in2, GPIO.LOW)
+    GPIO.output(LM1in1, GPIO.HIGH)
+    GPIO.output(LM1in2, GPIO.LOW)
+    GPIO.output(LM2in1, GPIO.HIGH)
+    GPIO.output(LM2in2, GPIO.LOW)
+    GPIO.output(RM2in2, GPIO.LOW)
+    GPIO.output(RM2in1, GPIO.HIGH)
+    p1.ChangeDutyCycle(31)
+    p2.ChangeDutyCycle(31)
+    p3.ChangeDutyCycle(31)
+    p4.ChangeDutyCycle(31)
+
+def reverse():
+    GPIO.output(RM1in1, GPIO.LOW)
+    GPIO.output(RM1in2, GPIO.HIGH)
+    GPIO.output(LM1in2, GPIO.HIGH)
+    GPIO.output(LM1in1, GPIO.LOW)
+    GPIO.output(LM2in1, GPIO.LOW)
+    GPIO.output(LM2in2, GPIO.HIGH)
+    GPIO.output(RM2in1, GPIO.LOW)
+    GPIO.output(RM2in2, GPIO.HIGH)
+    p1.ChangeDutyCycle(24.5)
+    p2.ChangeDutyCycle(24.5)
+    p3.ChangeDutyCycle(27)
+    p4.ChangeDutyCycle(28)
+
+def stop():
+    GPIO.output(LM1in1, GPIO.LOW)
+    GPIO.output(LM1in2, GPIO.LOW)
+    GPIO.output(LM2in1, GPIO.LOW)
+    GPIO.output(LM2in2, GPIO.LOW)
+    GPIO.output(RM1in1, GPIO.LOW)
+    GPIO.output(RM1in2, GPIO.LOW)
+    GPIO.output(RM2in1, GPIO.LOW)
+    GPIO.output(RM2in2, GPIO.LOW)
+    p1.ChangeDutyCycle(100)
+    p2.ChangeDutyCycle(100)
+    p3.ChangeDutyCycle(100)
+    p4.ChangeDutyCycle(100)
+
+def keypadmaincall(count):
+    result=-1
+    #count=0
+    check=1
+    data=-1
+    #result=-1
+    GPIO.output(col1, GPIO.HIGH)
+    GPIO.output(col2, GPIO.LOW)
+    GPIO.output(col3, GPIO.LOW)
+    result = keypad_scan(check)
+    if result != -1:
+        #print(result)
+        data=result
+        result=-1
+        time.sleep(1)
+        count=count+1
+        return count,data
+    time.sleep(0.01)
+    #result=-1
+
+    check=2
+    GPIO.output(col2, GPIO.HIGH)
+    GPIO.output(col1, GPIO.LOW)
+    GPIO.output(col3, GPIO.LOW)
+    result =keypad_scan(check)
+    if result != -1:
+        #print(result)
+        data=result
+        result=-1
+        time.sleep(1)
+        count=count+1
+        return count,data
+    time.sleep(0.01)
+    #result=-1
+
+    check=3
+    GPIO.output(col3, GPIO.HIGH)
+    GPIO.output(col2, GPIO.LOW)
+    GPIO.output(col1, GPIO.LOW)
+    result = keypad_scan(check)
+    if result != -1:
+        #print(result)
+        data=result
+        result=-1
+        time.sleep(1)
+        count=count+1
+        return count,data
+    time.sleep(0.01)
+
+    return count,data
+
+result=-1
+count=0
+array=[0,0,0,0]
+
+cmd_beg= 'espeak '
+cmd_end= ' | aplay /home/pi/Desktop/Text.wav  2>/dev/null' # To play back the stored .wav file and to dump the std errors to /dev/null
+cmd_out= '--stdout > /home/pi/Desktop/Text.wav ' # To store the voice file
+text2 = ("Hello I am Indoor Guidance and Delivery Robot.")
+text2 = text2.replace(' ', '__')
+print(text2)
+call([cmd_beg+cmd_out+text2+cmd_end], shell=True)
+time.sleep(0.1)
+
+cmd_end10= ' | aplay /home/pi/Desktop/Text10.wav  2>/dev/null' # To play back the stored .wav file and to dump the std errors to /dev/null
+cmd_out10= '--stdout > /home/pi/Desktop/Text10.wav ' # To store the voice file
+text3 = ("Please tell me about your destination.")
+text3 = text3.replace(' ', '__')
+print(text3)
+call([cmd_beg+cmd_out10+text3+cmd_end10], shell=True)
+time.sleep(0.1)
+
+labcheck=1
+moveback=0
+labmenudisplay=1
+
+p1=GPIO.PWM(En1,100)
+p2=GPIO.PWM(En2,100)
+p3=GPIO.PWM(En3,100)
+p4=GPIO.PWM(En4,100)
+p1.start(0)
+p2.start(0)
+p3.start(0)
+p4.start(0)
+
+p = GPIO.PWM(servoPIN, 50) # GPIO 17 for PWM with 50Hz
+p.start(0) # Initialization
+
+revolution=0 #revolution
+temp=0
+whitecheck=0
+blackcheck=0
+check=0
+ti=0
+to=0
+final=0
+revpermin=0
+distance=0
+
+codecount=0
+hurdlecheck=1
+
+whichlab=0
+rotatecheck=0
+rotateagaincheck=1
+
+analoglabdist=828
+while True :
+    sender = Emailer()
+
+    #Set the IIC address
+    ads1115.setAddr_ADS1115(0x48)
+    #Sets the gain and input voltage range.
+    ads1115.setGain(ADS1115_REG_CONFIG_PGA_6_144V)
+
+    if labcheck == 1:
+        if labmenudisplay == 1:
+            cmd_end11= ' | aplay /home/pi/Desktop/Text11.wav  2>/dev/null' # To play back the stored .wav file and to dump the std errors to /dev/null
+            cmd_out11= '--stdout > /home/pi/Desktop/Text11.wav ' # To store the voice file
+            text = ("Enter four for Digital Signal Processing Lab")
+            text = text.replace(' ', '____')
+            call([cmd_beg+cmd_out11+text+cmd_end11], shell=True)
+            time.sleep(0.15)
+            print(text)
+
+            cmd_end12= ' | aplay /home/pi/Desktop/Text12.wav  2>/dev/null' # To play back the stored .wav file and to dump the std errors to /dev/null
+            cmd_out12= '--stdout > /home/pi/Desktop/Text12.wav ' # To store the voice file
+            text1 = ("Enter five for Analog Electronics Lab.")
+            text1 = text1.replace(' ', '____')
+            call([cmd_beg+cmd_out12+text1+cmd_end12], shell=True)
+            time.sleep(0.15)
+            print(text1)
+
+            cmd_end13= ' | aplay /home/pi/Desktop/Text13.wav  2>/dev/null' # To play back the stored .wav file and to dump the std errors to /dev/null
+            cmd_out13= '--stdout > /home/pi/Desktop/Text13.wav ' # To store the voice file
+            text2 = ("Enter six for Digital Electronics Lab.")
+            text2 = text2.replace(' ', '____')
+            call([cmd_beg+cmd_out+text2+cmd_end], shell=True)
+            time.sleep(0.15)
+            print(text2)
+            labmenudisplay=0
+
+        while codecount != 1:
+            count,result = keypadmaincall(count)
+            if result != -1:
+                print(count)
+                print(result)
+                array[count-1]=result
+                codecount=codecount+1
+
+        print(codecount)
+        print(array[0])
+
+        if codecount == 1:
+            codecount=0
+
+            if array[0] == 4:
+                #cmd_beg5= 'espeak '
+                cmd_end14= ' | aplay /home/pi/Desktop/Text14.wav  2>/dev/null' # To play back the stored .wav file and to dump the std errors to /dev/null
+                cmd_out14= '--stdout > /home/pi/Desktop/Text14.wav ' # To store the voice file
+                text = ("Digital Signal Processing Lab.")
+                text = text.replace(' ', '__')
+                call([cmd_beg5+cmd_out14+text+cmd_end14], shell=True)
+                time.sleep(0.1)
+                print(text)
+
+            elif array[0] == 5:
+                cmd_beg6= 'espeak '
+                cmd_end6= ' | aplay /home/pi/Desktop/Text.wav  2>/dev/null' # To play back the stored .wav file and to dump the std errors to /dev/null
+                cmd_out6= '--stdout > /home/pi/Desktop/Text.wav ' # To store the voice file
+                text = ("Analog Electronics Lab.")
+                text = text.replace(' ', '__')
+                call([cmd_beg6+cmd_out6+text+cmd_end6], shell=True)
+                time.sleep(0.1)
+                print(text)
+
+            elif array[0] == 6:
+                cmd_beg7= 'espeak '
+                cmd_end7= ' | aplay /home/pi/Desktop/Text.wav  2>/dev/null' # To play back the stored .wav file and to dump the std errors to /dev/null
+                cmd_out7= '--stdout > /home/pi/Desktop/Text.wav ' # To store the voice file
+                text = ("Digital Electronics Lab.")
+                text = text.replace(' ', '__')
+                call([cmd_beg7+cmd_out7+text+cmd_end7], shell=True)
+                time.sleep(0.1)
+                print(text)
+
+            whichlab=array[0]
+            labcheck=0
+            count=0
+
+    #encoder and RFID codecs
+    distance=revolution*(4*3.14*2)
+
+    if whichlab == 4:
+        while distance<831:
+            adc0 = ads1115.readVoltage(0)
+            v=adc0['r']*(3.3/65535.0)
+            dist = (1 / v)
+            #print ("Distance : %.2f cm" % dist)
+
+            if 7<=dist<=14:
+                stop()
+                if hurdlecheck == 1:
+                    text = ("Kindly Give me way.")
+                    text = text.replace(' ', '__')
+                    call([cmd_beg+cmd_out+text+cmd_end], shell=True)
+                    time.sleep(0.1)
+                    print(text)
+                    hurdlecheck=0
+
+            else:
+                forward()
+                #reverse()
+                if rotatecheck == 1:
+                    rotateagain()
+                    time.sleep(0.1)
+                    rotatecheck=0
+                    rotateagaincheck=1
+                hurdlecheck=1
+
+            if GPIO.input(ir_sensor)==1:
+                whitecheck=1
+                temp=temp+1
+
+            elif GPIO.input(ir_sensor)==0:
+                if whitecheck==1:
+                    revolution=revolution+1
+                    whitecheck=0
+                    print(revolution)
+            distance=revolution*(1.5*3.14*2)
+            time.sleep(0.01)
+
+        #if distance>=analoglabdist+1:
+        if distance>=831:
+            stop()
+            #sendTo = 'arslanmughalpk1111@gmail.com'
+            #emailSubject = "Secret Passcode is"
+            #emailContent = "789"
+
+            #Sends an email to the "sendTo" address with the specified "emailSubject" as the subject and "emailContent" as the email content.
+            #sender.sendmail(sendTo, emailSubject, emailContent)
+
+            text = ("Reached Analog Electronics Lab.")
+            text = text.replace(' ', '__')
+            call([cmd_beg+cmd_out+text+cmd_end], shell=True)
+            time.sleep(0.15)
+
+            revolution=0
+
+            id, text = reader.read()
+            while id == 0:
+                id, text = reader.read()
+            print(id)
+            #print(revolution)
+            #print(distance)
+            time.sleep(1)
+            distance=0
+            if id == 633397592282:
+                text = ("Start Entering Code.")
+                text = text.replace(' ', '__')
+                call([cmd_beg+cmd_out+text+cmd_end], shell=True)
+                time.sleep(0.15)
+
+            while count != 1:
+                count,result = keypadmaincall(count)
+                if result != -1:
+                    print(count)
+                    print(result)
+                    array[0]=result
+
+            print(count)
+            print(array[0])
+
+            while count != 2:
+                count,result = keypadmaincall(count)
+                if result != -1:
+                    print(count)
+                    print(result)
+                    array[1]=result
+
+            print(count)
+            print(array[1])
+
+            while count != 3:
+                count,result = keypadmaincall(count)
+                if result != -1:
+                    print(count)
+                    print(result)
+                    array[2]=result
+
+            print(count)
+            print(array[2])
+
+            if count == 3:
+                text = ("Complete Data Entered")
+                text = text.replace(' ', '__')
+                call([cmd_beg+cmd_out+text+cmd_end], shell=True)
+                time.sleep(0.15)
+                print("Values of Array : ")
+                for i in range(3):
+                    print(array[i])
+
+                if array[0] is 7:
+                    if array[1] is 8:
+                        if array[2] is 9:
+                            text = ("Correct PassCode entered Door Unlocked")
+                            text = text.replace(' ', '__')
+                            call([cmd_beg+cmd_out+text+cmd_end], shell=True)
+                            time.sleep(0.15)
+
+                            GPIO.output(logic, GPIO.LOW)
+                            time.sleep(1)
+                            GPIO.output(logic, GPIO.HIGH)
+                            time.sleep(5)
+
+                else:
+                    text = ("Incorrect PassCode")
+                    text = text.replace(' ', '__')
+                    call([cmd_beg+cmd_out+text+cmd_end], shell=True)
+                    time.sleep(0.15)
+                moveback=1
+
+                text = ("Enter four if parcel is received")
+                text = text.replace(' ', '__')
+                call([cmd_beg+cmd_out+text+cmd_end], shell=True)
+                time.sleep(0.15)
+
+                text1 = ("Enter five if parcel is not received")
+                text1 = text1.replace(' ', '__')
+                call([cmd_beg+cmd_out+text1+cmd_end], shell=True)
+                time.sleep(0.15)
+
+                text2 = ("Kindly close the door")
+                text2 = text2.replace(' ', '__')
+                call([cmd_beg+cmd_out+text2+cmd_end], shell=True)
+                time.sleep(0.15)
+
+                count=0
+                array[0]=0
+
+            while count != 1:
+                count,result = keypadmaincall(count)
+                if result != -1:
+                    array[count-1] = result
+
+            if moveback == 1:
+                if count == 1:
+                    if array[0] is 4:
+                        text = ("Thank you for the delivery order")
+                        text = text.replace(' ', '__')
+                        call([cmd_beg+cmd_out+text+cmd_end], shell=True)
+                        time.sleep(0.15)
+                        moveback=0
+
+            while distance<analoglabdist:
+                adc0 = ads1115.readVoltage(0)
+                v=adc0['r']*(3.3/65535.0)
+                dist = (1 / v)
+                print ("Distance : %.2f cm" % dist)
+
+                if 7<=dist<=13:
+                    stop()
+                    if hurdlecheck == 1:
+                        text = ("Kindly Give me way.")
+                        text = text.replace(' ', '__')
+                        call([cmd_beg+cmd_out+text+cmd_end], shell=True)
+                        time.sleep(0.1)
+                        print(text)
+                        hurdlecheck=0
+
+                else:
+                    reverse()
+                    if rotateagaincheck == 1:
+                        rotate180()
+                        time.sleep(0.1)
+                        rotateagaincheck=0
+                        rotatecheck=1
+                    hurdlecheck=1
+
+                if GPIO.input(ir_sensor)==1:
+                    whitecheck=1
+                    temp=temp+1
+
+                elif GPIO.input(ir_sensor)==0:
+                    if whitecheck==1:
+                        revolution=revolution+1
+                        whitecheck=0
+                distance=revolution*(4*3.14*2)
+                time.sleep(0.01)
+
+            stop()
+            text2 = ("Reached Base Station")
+            text2 = text2.replace(' ', '__')
+            call([cmd_beg+cmd_out+text2+cmd_end], shell=True)
+            time.sleep(0.15)
+
+    elif whichlab == 5:
+        #while distance<analoglabdist:
+        #while distance<831:
+        while revolution<33:
+            adc0 = ads1115.readVoltage(0)
+            v=adc0['r']*(3.3/65535.0)
+            dist = (1 / v)
+            #print ("Distance : %.2f cm" % dist)
+
+            if 7<=dist<=12:
+                stop()
+                if hurdlecheck == 1:
+                    text = ("Kindly Give me way.")
+                    text = text.replace(' ', '__')
+                    call([cmd_beg+cmd_out+text+cmd_end], shell=True)
+                    time.sleep(0.1)
+                    print(text)
+                    hurdlecheck=0
+
+            else:
+                forward()
+                #reverse()
+                if rotatecheck == 1:
+                    rotateagain()
+                    time.sleep(0.1)
+                    rotatecheck=0
+                    rotateagaincheck=1
+                hurdlecheck=1
+
+            if GPIO.input(ir_sensor)==1:
+                whitecheck=1
+                temp=temp+1
+
+            elif GPIO.input(ir_sensor)==0:
+                if whitecheck==1:
+                    revolution=revolution+1
+                    whitecheck=0
+                    print(revolution)
+            distance=revolution*(1.5*3.14*2)
+            time.sleep(0.01)
+
+        #if distance>=analoglabdist+1:
+        #if distance>=831:
+        if revolution >=33:
+            stop()
+            #sendTo = 'arslanmughalpk1111@gmail.com'
+            #emailSubject = "Secret Passcode is"
+            #emailContent = "789"
+
+            #Sends an email to the "sendTo" address with the specified "emailSubject" as the subject and "emailContent" as the email content.
+            #sender.sendmail(sendTo, emailSubject, emailContent)
+
+            text = ("Reached Analog Electronics Lab.")
+            text = text.replace(' ', '__')
+            call([cmd_beg+cmd_out+text+cmd_end], shell=True)
+            time.sleep(0.15)
+
+            revolution=0
+
+            id, text = reader.read()
+            while id == 0:
+                forwardslow()
+                id, text = reader.read()
+            stop()
+            print(id)
+            time.sleep(1)
+            distance=0
+            if id == 633397592282:
+                text = ("Start Entering Code.")
+                text = text.replace(' ', '__')
+                call([cmd_beg+cmd_out+text+cmd_end], shell=True)
+                time.sleep(0.15)
+
+            while count != 1:
+                count,result = keypadmaincall(count)
+                if result != -1:
+                    print(count)
+                    print(result)
+                    array[0]=result
+
+            print(count)
+            print(array[0])
+
+            while count != 2:
+                count,result = keypadmaincall(count)
+                if result != -1:
+                    print(count)
+                    print(result)
+                    array[1]=result
+
+            print(count)
+            print(array[1])
+
+            while count != 3:
+                count,result = keypadmaincall(count)
+                if result != -1:
+                    print(count)
+                    print(result)
+                    array[2]=result
+
+            print(count)
+            print(array[2])
+
+            if count == 3:
+                text = ("Complete Data Entered")
+                text = text.replace(' ', '__')
+                call([cmd_beg+cmd_out+text+cmd_end], shell=True)
+                time.sleep(0.15)
+                print("Values of Array : ")
+                for i in range(3):
+                    print(array[i])
+
+                if array[0] is 7:
+                    if array[1] is 8:
+                        if array[2] is 9:
+                            text = ("Correct PassCode entered Door Unlocked")
+                            text = text.replace(' ', '__')
+                            call([cmd_beg+cmd_out+text+cmd_end], shell=True)
+                            time.sleep(0.15)
+
+                            GPIO.output(logic, GPIO.LOW)
+                            time.sleep(1)
+                            GPIO.output(logic, GPIO.HIGH)
+                            time.sleep(5)
+
+                else:
+                    text = ("Incorrect PassCode")
+                    text = text.replace(' ', '__')
+                    call([cmd_beg+cmd_out+text+cmd_end], shell=True)
+                    time.sleep(0.15)
+                moveback=1
+
+                text = ("Enter four if parcel is received")
+                text = text.replace(' ', '__')
+                call([cmd_beg+cmd_out+text+cmd_end], shell=True)
+                time.sleep(0.15)
+
+                text1 = ("Enter five if parcel is not received")
+                text1 = text1.replace(' ', '__')
+                call([cmd_beg+cmd_out+text1+cmd_end], shell=True)
+                time.sleep(0.15)
+
+                text2 = ("Kindly close the door")
+                text2 = text2.replace(' ', '__')
+                call([cmd_beg+cmd_out+text2+cmd_end], shell=True)
+                time.sleep(0.15)
+
+                count=0
+                array[0]=0
+
+            while count != 1:
+                count,result = keypadmaincall(count)
+                if result != -1:
+                    array[count-1] = result
+
+            if moveback == 1:
+                if count == 1:
+                    if array[0] is 4:
+                        text = ("Thank you for the delivery order")
+                        text = text.replace(' ', '__')
+                        call([cmd_beg+cmd_out+text+cmd_end], shell=True)
+                        time.sleep(0.15)
+                        moveback=0
+
+            while distance<analoglabdist:
+                adc0 = ads1115.readVoltage(0)
+                v=adc0['r']*(3.3/65535.0)
+                dist = (1 / v)
+                print ("Distance : %.2f cm" % dist)
+
+                if 7<=dist<=13:
+                    stop()
+                    if hurdlecheck == 1:
+                        text = ("Kindly Give me way.")
+                        text = text.replace(' ', '__')
+                        call([cmd_beg+cmd_out+text+cmd_end], shell=True)
+                        time.sleep(0.1)
+                        print(text)
+                        hurdlecheck=0
+
+                else:
+                    reverse()
+                    if rotateagaincheck == 1:
+                        rotate180()
+                        time.sleep(0.1)
+                        rotateagaincheck=0
+                        rotatecheck=1
+                    hurdlecheck=1
+
+                if GPIO.input(ir_sensor)==1:
+                    whitecheck=1
+                    temp=temp+1
+
+                elif GPIO.input(ir_sensor)==0:
+                    if whitecheck==1:
+                        revolution=revolution+1
+                        whitecheck=0
+                distance=revolution*(4*3.14*2)
+                time.sleep(0.01)
+
+            stop()
+            text2 = ("Reached Base Station")
+            text2 = text2.replace(' ', '__')
+            call([cmd_beg+cmd_out+text2+cmd_end], shell=True)
+            time.sleep(0.15)
+
+    elif whichlab == 6:
+        #while distance<analoglabdist:
+        while revolution<33:
+            adc0 = ads1115.readVoltage(0)
+            v=adc0['r']*(3.3/65535.0)
+            dist = (1 / v)
+            #print ("Distance : %.2f cm" % dist)
+
+            if 7<=dist<=12:
+                stop()
+                if hurdlecheck == 1:
+                    text = ("Kindly Give me way.")
+                    text = text.replace(' ', '__')
+                    call([cmd_beg+cmd_out+text+cmd_end], shell=True)
+                    time.sleep(0.1)
+                    print(text)
+                    hurdlecheck=0
+
+            else:
+                forward()
+                #reverse()
+                if rotatecheck == 1:
+                    rotateagain()
+                    time.sleep(0.1)
+                    rotatecheck=0
+                    rotateagaincheck=1
+                hurdlecheck=1
+
+            if GPIO.input(ir_sensor)==1:
+                whitecheck=1
+                temp=temp+1
+
+            elif GPIO.input(ir_sensor)==0:
+                if whitecheck==1:
+                    revolution=revolution+1
+                    whitecheck=0
+                    print(revolution)
+            distance=revolution*(1.5*3.14*2)
+            time.sleep(0.01)
+
+        #if distance>=analoglabdist+1:
+        #if distance>=831:
+        if revolution >=33:
+            stop()
+            sendTo = 'arslanmughalpk1111@gmail.com'
+            emailSubject = "Secret Passcode is"
+            emailContent = "789"
+
+            #Sends an email to the "sendTo" address with the specified "emailSubject" as the subject and "emailContent" as the email content.
+            sender.sendmail(sendTo, emailSubject, emailContent)
+
+            text = ("Reached Analog Electronics Lab.")
+            text = text.replace(' ', '__')
+            call([cmd_beg+cmd_out+text+cmd_end], shell=True)
+            time.sleep(0.15)
+
+            revolution=0
+
+            id, text = reader.read()
+            while id == 0:
+                forwardslow()
+                id, text = reader.read()
+            stop()
+            print(id)
+            time.sleep(1)
+            distance=0
+            if id == 633397592282:
+                text = ("Start Entering Code.")
+                text = text.replace(' ', '__')
+                call([cmd_beg+cmd_out+text+cmd_end], shell=True)
+                time.sleep(0.15)
+
+            while count != 1:
+                count,result = keypadmaincall(count)
+                if result != -1:
+                    print(count)
+                    print(result)
+                    array[0]=result
+
+            print(count)
+            print(array[0])
+
+            while count != 2:
+                count,result = keypadmaincall(count)
+                if result != -1:
+                    print(count)
+                    print(result)
+                    array[1]=result
+
+            print(count)
+            print(array[1])
+
+            while count != 3:
+                count,result = keypadmaincall(count)
+                if result != -1:
+                    print(count)
+                    print(result)
+                    array[2]=result
+
+            print(count)
+            print(array[2])
+
+            if count == 3:
+                text = ("Complete Data Entered")
+                text = text.replace(' ', '__')
+                call([cmd_beg+cmd_out+text+cmd_end], shell=True)
+                time.sleep(0.15)
+                print("Values of Array : ")
+                for i in range(3):
+                    print(array[i])
+
+                if array[0] is 7:
+                    if array[1] is 8:
+                        if array[2] is 9:
+                            text = ("Correct PassCode entered Door Unlocked")
+                            text = text.replace(' ', '__')
+                            call([cmd_beg+cmd_out+text+cmd_end], shell=True)
+                            time.sleep(0.15)
+
+                            GPIO.output(logic, GPIO.LOW)
+                            time.sleep(1)
+                            GPIO.output(logic, GPIO.HIGH)
+                            time.sleep(5)
+
+                else:
+                    text = ("Incorrect PassCode")
+                    text = text.replace(' ', '__')
+                    call([cmd_beg+cmd_out+text+cmd_end], shell=True)
+                    time.sleep(0.15)
+                moveback=1
+
+                text = ("Enter four if parcel is received")
+                text = text.replace(' ', '__')
+                call([cmd_beg+cmd_out+text+cmd_end], shell=True)
+                time.sleep(0.15)
+
+                text1 = ("Enter five if parcel is not received")
+                text1 = text1.replace(' ', '__')
+                call([cmd_beg+cmd_out+text1+cmd_end], shell=True)
+                time.sleep(0.15)
+
+                text2 = ("Kindly close the door")
+                text2 = text2.replace(' ', '__')
+                call([cmd_beg+cmd_out+text2+cmd_end], shell=True)
+                time.sleep(0.15)
+
+                count=0
+                array[0]=0
+
+            while count != 1:
+                count,result = keypadmaincall(count)
+                if result != -1:
+                    array[count-1] = result
+
+            if moveback == 1:
+                if count == 1:
+                    if array[0] is 4:
+                        text = ("Thank you for the delivery order")
+                        text = text.replace(' ', '__')
+                        call([cmd_beg+cmd_out+text+cmd_end], shell=True)
+                        time.sleep(0.15)
+                        moveback=0
+
+            #while distance<analoglabdist:
+            while revolution<33:
+                adc0 = ads1115.readVoltage(0)
+                v=adc0['r']*(3.3/65535.0)
+                dist = (1 / v)
+                print ("Distance : %.2f cm" % dist)
+
+                if 7<=dist<=13:
+                    stop()
+                    if hurdlecheck == 1:
+                        text = ("Kindly Give me way.")
+                        text = text.replace(' ', '__')
+                        call([cmd_beg+cmd_out+text+cmd_end], shell=True)
+                        time.sleep(0.1)
+                        print(text)
+                        hurdlecheck=0
+
+                else:
+                    reverse()
+                    if rotateagaincheck == 1:
+                        rotate180()
+                        time.sleep(0.1)
+                        rotateagaincheck=0
+                        rotatecheck=1
+                    hurdlecheck=1
+
+                if GPIO.input(ir_sensor)==1:
+                    whitecheck=1
+                    temp=temp+1
+
+                elif GPIO.input(ir_sensor)==0:
+                    if whitecheck==1:
+                        revolution=revolution+1
+                        whitecheck=0
+                distance=revolution*(4*3.14*2)
+                time.sleep(0.01)
+
+            stop()
+            text2 = ("Reached Base Station")
+            text2 = text2.replace(' ', '__')
+            call([cmd_beg+cmd_out+text2+cmd_end], shell=True)
+            time.sleep(0.15)
+
+GPIO.cleanup()

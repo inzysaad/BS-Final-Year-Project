@@ -1,0 +1,93 @@
+import sys
+import time
+import RPi.GPIO as GPIO
+
+
+leftmotorforward=15#10
+leftmotorreverse=14#8
+rightmotorforward=17#11
+rightmotorreverse=27#13
+leftsensor=22#15
+rightsensor=23#16
+leftpwm=24#18;
+rightpwm=10#19;
+# servo=
+sleeptime=1
+pwmvalue=25
+
+
+GPIO.setwarnings(False)
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(leftmotorforward, GPIO.OUT, initial=GPIO.LOW)
+GPIO.setup(rightmotorforward, GPIO.OUT, initial=GPIO.LOW)
+GPIO.setup(leftmotorreverse, GPIO.OUT, initial=GPIO.LOW)
+GPIO.setup(rightmotorreverse, GPIO.OUT, initial=GPIO.LOW)
+GPIO.setup(leftsensor, GPIO.IN)
+GPIO.setup(rightsensor, GPIO.IN)
+GPIO.setup(leftpwm, GPIO.OUT)
+GPIO.setup(rightpwm, GPIO.OUT)
+
+
+def left(x):                         
+    print ("LEFT")
+    GPIO.output(leftmotorforward, GPIO.LOW)                   #-----> turning left 
+    GPIO.output(leftmotorreverse, GPIO.HIGH) 
+    GPIO.output(rightmotorforward, GPIO.HIGH) 
+    GPIO.output(rightmotorreverse, GPIO.LOW)
+    time.sleep(x)
+
+def right(x): 
+    print ("RIGHT")
+    GPIO.output(leftmotorforward, GPIO.HIGH)  
+    GPIO.output(leftmotorreverse, GPIO.LOW)                  #-----> turning right   
+    GPIO.output(rightmotorforward, GPIO.LOW) 
+    GPIO.output(rightmotorreverse, GPIO.HIGH)
+    time.sleep(x)
+
+def forward(x): 
+    print ("FORWARD")
+    GPIO.output(leftmotorforward, GPIO.HIGH) 
+    GPIO.output(leftmotorreverse, GPIO.LOW)                   #-----> move forward 
+    GPIO.output(rightmotorforward, GPIO.HIGH) 
+    GPIO.output(rightmotorreverse, GPIO.LOW)  
+    time.sleep(x)
+
+def reverse(x): 
+    print ("BACKWARDS")
+    GPIO.output(leftmotorforward, GPIO.LOW) 
+    GPIO.output(leftmotorreverse, GPIO.HIGH) 
+    GPIO.output(rightmotorforward, GPIO.LOW)                   #-----> move backwards 
+    GPIO.output(rightmotorreverse, GPIO.HIGH)
+    time.sleep(x)
+
+def stop(): 
+    print ("STOP")
+    GPIO.output(leftmotorforward, GPIO.LOW) 
+    GPIO.output(leftmotorreverse, GPIO.LOW)                   #-----> stop 
+    GPIO.output(rightmotorforward, GPIO.LOW) 
+    GPIO.output(rightmotorreverse, GPIO.LOW)
+    
+#-----> Controlling Speed of Motors
+s1=GPIO.PWM(leftpwm, 100)
+s2=GPIO.PWM(rightpwm, 100)
+s1.start(1)
+s2.start(1)
+s1.ChangeDutyCycle(pwmvalue)
+time.sleep(0.2)
+s2.ChangeDutyCycle(pwmvalue)
+time.sleep(0.2)
+
+# while(1):
+#     if(GPIO.input(leftsensor)==0 or GPIO.input(rightsensor)==0):
+#         stop()
+#     else:
+#         forward(0.2)
+        
+        
+forward(2)
+left(2)
+right(2)
+reverse(2)
+
+print ("Initiating cleanup protocol...")
+GPIO.cleanup()

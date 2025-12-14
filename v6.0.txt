@@ -1,0 +1,171 @@
+import sys
+import time
+import RPi.GPIO as GPIO
+
+lfmf = 14  # 8                       #--: Left front motor forward
+lfmr = 15  # 10                      #--: Left front motor reverse
+lbmf = 17  # 11                      #--: Left back motor forward
+lbmr = 18  # 12                      #--: Left back motor reverse
+
+rfmf = 23  # 16                      #--: Right front motor forward
+rfmr = 24  # 18                      #--: Right front motor reverse
+rbmf = 10  # 19                      #--: Right back motor forward
+rbmr = 9  # 21                       #--: Right back motor reverse
+
+leftpwmfront = 4  # 7;
+leftpwmback = 27  # 13;
+rightpwmfront = 22  # 15;
+rightpwmback = 25  # 22;
+
+# frontlights=
+# backlights=
+# leftindicator=
+# rightindicator=
+
+# lidar_sensor=
+
+
+# Global Variables
+sleeptime = 1
+pwmvalue = 60
+pwmturnvalue = 20
+
+# Initializing GPIO_PINS
+GPIO.setwarnings(False)
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(lfmf, GPIO.OUT, initial=GPIO.LOW)
+GPIO.setup(lfmr, GPIO.OUT, initial=GPIO.LOW)
+GPIO.setup(lbmf, GPIO.OUT, initial=GPIO.LOW)
+GPIO.setup(lbmr, GPIO.OUT, initial=GPIO.LOW)
+
+GPIO.setup(rfmf, GPIO.OUT, initial=GPIO.LOW)
+GPIO.setup(rfmr, GPIO.OUT, initial=GPIO.LOW)
+GPIO.setup(rbmf, GPIO.OUT, initial=GPIO.LOW)
+GPIO.setup(rbmr, GPIO.OUT, initial=GPIO.LOW)
+
+#GPIO.setup(leftsensor, GPIO.IN)
+#GPIO.setup(rightsensor, GPIO.IN)
+#GPIO.setup(lidar_sensor, GPIO.IN)
+GPIO.setup(leftpwmfront, GPIO.OUT)
+GPIO.setup(leftpwmback, GPIO.OUT)
+GPIO.setup(rightpwmfront, GPIO.OUT)
+GPIO.setup(rightpwmback, GPIO.OUT)
+
+# -----> Controlling Speed of Motors
+s1 = GPIO.PWM(leftpwmfront, 100)
+s2 = GPIO.PWM(leftpwmback, 100)
+s3 = GPIO.PWM(rightpwmfront, 100)
+s4 = GPIO.PWM(rightpwmback, 100)
+
+s1.start(1)
+s2.start(1)
+s3.start(1)
+s4.start(1)
+s1.ChangeDutyCycle(pwmvalue)
+time.sleep(0.1)
+s2.ChangeDutyCycle(pwmvalue)
+time.sleep(0.1)
+s3.ChangeDutyCycle(pwmvalue)
+time.sleep(0.1)
+s4.ChangeDutyCycle(pwmvalue)
+time.sleep(0.1)
+
+
+def left(x):
+    print("Left")  # -----> turning left
+    GPIO.output(lfmf, GPIO.LOW)
+    GPIO.output(lfmr, GPIO.LOW)
+    GPIO.output(lbmf, GPIO.HIGH)
+    GPIO.output(lbmr, GPIO.LOW)
+
+    GPIO.output(rfmf, GPIO.LOW)
+    GPIO.output(rfmr, GPIO.HIGH)
+    GPIO.output(rbmf, GPIO.LOW)
+    GPIO.output(rbmr, GPIO.LOW)
+    time.sleep(x)
+
+
+def right(x):
+    print("Right")  # -----> turning right
+    GPIO.output(lfmf, GPIO.HIGH)
+    GPIO.output(lfmr, GPIO.LOW)
+    GPIO.output(lbmf, GPIO.LOW)
+    GPIO.output(lbmr, GPIO.LOW)
+
+    GPIO.output(rfmf, GPIO.LOW)
+    GPIO.output(rfmr, GPIO.LOW)
+    GPIO.output(rbmf, GPIO.LOW)
+    GPIO.output(rbmr, GPIO.HIGH)
+    time.sleep(x)
+
+
+def forward(x):
+    print("Forward")  # -----> moving forward
+    GPIO.output(lfmf, GPIO.HIGH)
+    GPIO.output(lfmr, GPIO.LOW)
+    GPIO.output(lbmf, GPIO.LOW)
+    GPIO.output(lbmr, GPIO.HIGH)
+
+    GPIO.output(rfmf, GPIO.LOW)
+    GPIO.output(rfmr, GPIO.HIGH)
+    GPIO.output(rbmf, GPIO.HIGH)
+    GPIO.output(rbmr, GPIO.LOW)
+    time.sleep(x)
+
+
+def reverse(x):
+    print("Reverse")  # -----> moving backwards
+    GPIO.output(lfmf, GPIO.LOW)
+    GPIO.output(lfmr, GPIO.HIGH)
+    GPIO.output(lbmf, GPIO.HIGH)
+    GPIO.output(lbmr, GPIO.LOW)
+
+    GPIO.output(rfmf, GPIO.HIGH)
+    GPIO.output(rfmr, GPIO.LOW)
+    GPIO.output(rbmf, GPIO.LOW)
+    GPIO.output(rbmr, GPIO.HIGH)
+    time.sleep(x)
+
+
+def stop(x):
+    print("Stop")  # -----> Stop
+    GPIO.output(lfmf, GPIO.LOW)
+    GPIO.output(lfmr, GPIO.LOW)
+    GPIO.output(lbmf, GPIO.LOW)
+    GPIO.output(lbmr, GPIO.LOW)
+
+    GPIO.output(rfmf, GPIO.LOW)
+    GPIO.output(rfmr, GPIO.LOW)
+    GPIO.output(rbmf, GPIO.LOW)
+    GPIO.output(rbmr, GPIO.LOW)
+    time.sleep(x)
+
+
+while 1:
+    x = input("Enter Command:")
+    if x == 'f':
+        forward(1)
+    elif x == 'b':
+        reverse(1)
+    elif x == 'l':
+        left(1)
+    elif x == 'r':
+        right(1)
+    elif x == 's':
+        stop(1)
+    else:
+        print("Initiating cleanup protocol...")
+        GPIO.cleanup()
+        break
+#    if(GPIO.input(leftsensor)==0 or GPIO.input(rightsensor)==0):
+#        stop()
+#    else:
+#       forward(0.2)
+
+
+# forward(2)
+# left(2)
+# right(2)
+# reverse(2)
+
+

@@ -1,0 +1,73 @@
+import sys
+import time
+import RPi.GPIO as GPIO
+
+inter1 = 14  # 8                       
+inter2 = 15  # 10                      
+inter3 = 17  # 11                      
+inter4 = 18  # 12                      
+
+
+
+# Global Variables
+sleeptime = 1
+
+
+# Initializing GPIO_PINS
+GPIO.setwarnings(False)
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(inter1, GPIO.OUT, initial=GPIO.LOW)
+GPIO.setup(inter2, GPIO.OUT, initial=GPIO.LOW)
+GPIO.setup(inter3, GPIO.OUT, initial=GPIO.LOW)
+GPIO.setup(inter4, GPIO.OUT, initial=GPIO.LOW)
+
+
+def right(x):
+    print("Right")  # -----> turning right
+    GPIO.output(inter1, GPIO.LOW)
+    GPIO.output(inter2, GPIO.LOW)
+    GPIO.output(inter3, GPIO.HIGH)
+    GPIO.output(inter4, GPIO.LOW)
+
+    time.sleep(x)
+
+def left(x):
+    print("Left")  # -----> turning left
+    GPIO.output(inter1, GPIO.LOW)
+    GPIO.output(inter2, GPIO.LOW)
+    GPIO.output(inter3, GPIO.LOW)
+    GPIO.output(inter4, GPIO.HIGH)
+
+    time.sleep(x)
+
+def forward(x):
+    print("Forward")  # -----> moving forward
+    GPIO.output(inter1, GPIO.HIGH)
+    GPIO.output(inter2, GPIO.LOW)
+    GPIO.output(inter3, GPIO.LOW)
+    GPIO.output(inter4, GPIO.LOW)
+
+    time.sleep(x)
+
+
+def reverse(x):
+    print("Reverse")  # -----> moving backwards
+    GPIO.output(inter1, GPIO.LOW)
+    GPIO.output(inter2, GPIO.HIGH)
+    GPIO.output(inter3, GPIO.LOW)
+    GPIO.output(inter4, GPIO.LOW)
+
+    time.sleep(x)
+
+
+def stop(x):
+    print("Stop")  # -----> Stop
+    GPIO.output(inter1, GPIO.LOW)
+    GPIO.output(inter2, GPIO.LOW)
+    GPIO.output(inter3, GPIO.LOW)
+    GPIO.output(inter4, GPIO.LOW)
+
+    time.sleep(x)
+
+    print("Initiating cleanup protocol...")
+    GPIO.cleanup()

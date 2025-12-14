@@ -1,0 +1,23 @@
+# to get the current status
+$ sudo rpi-eeprom-update
+# if needed, to update the firmware
+$ sudo rpi-eeprom-update -a
+$ sudo reboot
+
+sudo apt-get update
+sudo ifconfig				// on raspberry pi terminal to see the ip for putty
+sudo apt-get install xrdp		// to install the software on pi terminal
+sudo reboot				// to reboot the pi os
+Now open the remote desktop connection to connect with the pi
+
+sudo apt update
+sudo apt install python3 idle3
+
+Default ip gateway of pc
+
+cmd command:    ipconfig
+
+
+pyconfig via terminal:
+sudo raspi-config
+

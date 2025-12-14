@@ -1,0 +1,66 @@
+import sys
+import time
+import RPi.GPIO as GPIO
+
+
+leftmotorforward=10
+leftmotorreverse=8
+rightmotorforward=11
+rightmotorreverse=13
+
+sleeptime=1
+
+#GPIO.setwarnings(False)
+GPIO.setmode(GPIO.BOARD)
+GPIO.setup(leftmotorforward, GPIO.OUT, initial=GPIO.LOW)
+GPIO.setup(rightmotorforward, GPIO.OUT, initial=GPIO.LOW)
+GPIO.setup(leftmotorreverse, GPIO.OUT, initial=GPIO.LOW)
+GPIO.setup(rightmotorreverse, GPIO.OUT, initial=GPIO.LOW)
+
+def left(x):                         
+    print ("LEFT")
+    GPIO.output(leftmotorforward, GPIO.LOW)                   #-----> turning left 
+    GPIO.output(leftmotorreverse, GPIO.HIGH) 
+    GPIO.output(rightmotorforward, GPIO.HIGH) 
+    GPIO.output(rightmotorreverse, GPIO.LOW)
+    time.sleep(x)
+
+def right(x): 
+    print ("RIGHT")
+    GPIO.output(leftmotorforward, GPIO.HIGH)  
+    GPIO.output(leftmotorreverse, GPIO.LOW)                  #-----> turning right   
+    GPIO.output(rightmotorforward, GPIO.LOW) 
+    GPIO.output(rightmotorreverse, GPIO.HIGH)
+    time.sleep(x)
+
+def forward(x): 
+    print ("FORWARD")
+    GPIO.output(leftmotorforward, GPIO.HIGH) 
+    GPIO.output(leftmotorreverse, GPIO.LOW)                   #-----> move forward 
+    GPIO.output(rightmotorforward, GPIO.HIGH) 
+    GPIO.output(rightmotorreverse, GPIO.LOW)
+    time.sleep(x)
+
+def reverse(x): 
+    print ("BACKWARDS")
+    GPIO.output(leftmotorforward, GPIO.LOW) 
+    GPIO.output(leftmotorreverse, GPIO.HIGH) 
+    GPIO.output(rightmotorforward, GPIO.LOW)                   #-----> move backwards 
+    GPIO.output(rightmotorreverse, GPIO.HIGH)
+    time.sleep(x)
+
+def stop(x): 
+    print ("STOP")
+    GPIO.output(leftmotorforward, GPIO.LOW) 
+    GPIO.output(leftmotorreverse, GPIO.LOW)                   #-----> stop 
+    GPIO.output(rightmotorforward, GPIO.LOW) 
+    GPIO.output(rightmotorreverse, GPIO.LOW)
+    time.sleep(x)
+
+#forward(5)
+#left(5)
+#right(5)
+#reverse(5)
+stop(5)
+print ("Initiating cleanup protocol...")
+GPIO.cleanup()
